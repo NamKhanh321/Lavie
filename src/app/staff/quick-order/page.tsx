@@ -142,7 +142,7 @@ export default function QuickOrderPage() {
       toast.error('Vui lòng nhập tên và số điện thoại của khách hàng')
       return
     }
-    
+     
     try {
       const createdCustomer = await customerService.createCustomer(newCustomer)
       setCustomers([...customers, createdCustomer])
