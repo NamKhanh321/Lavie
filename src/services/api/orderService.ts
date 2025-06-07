@@ -44,7 +44,7 @@ export interface OrderCreate {
     unitPrice: number;
   }[];
   items?: {
-    product: string;
+    product?: string;
     quantity: number;
     returnable_quantity?: number;
     price: number;
