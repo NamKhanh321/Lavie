@@ -6,13 +6,34 @@ import { Order, orderService } from '@/services/api/orderService';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface Product { _id: string; name: string; price: number; is_returnable: boolean; stock?: number; }
-interface Customer { _id: string; name: string; phone: string; address: string; type: 'retail' | 'agency'; }
-interface CartItem { product: Product; quantity: number; returnable_quantity?: number; }
-type NewOrderFormProps = {
-  onOrderCreatedAction: (order: Order) => void
-  onCancelAction: () => void
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  is_returnable: boolean;
+  stock?: number;
+  image?: string; // Thêm ảnh sản phẩm
 }
+
+interface Customer {
+  _id: string;
+  name: string;
+  phone: string;
+  address: string;
+  type: 'retail' | 'agency';
+}
+
+interface CartItem {
+  product: Product;
+  quantity: number;
+  returnable_quantity?: number;
+}
+
+type NewOrderFormProps = {
+  onOrderCreatedAction: (order: Order) => void;
+  onCancelAction: () => void;
+};
+
 export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: NewOrderFormProps) {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -73,7 +94,7 @@ export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: N
 
     setIsSubmitting(true);
     try {
-      await orderService.createOrder({
+      const newOrder = await orderService.createOrder({
         customerId: selectedCustomer._id,
         customerName: selectedCustomer.name,
         orderItems: cart.map(item => ({
@@ -88,6 +109,7 @@ export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: N
 
       toast.success('Tạo đơn hàng thành công!');
       setCart([]);
+      onOrderCreatedAction(newOrder); // Gọi callback
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Tạo đơn hàng thất bại');
     } finally {
@@ -98,9 +120,7 @@ export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: N
   if (isLoading) return <p className="text-center">Đang tải dữ liệu...</p>;
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
-    
-
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-lg">
       {/* Chọn khách hàng */}
       <div className="mb-4">
         <label className="block mb-1 font-medium">Khách hàng</label>
@@ -110,7 +130,7 @@ export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: N
             const found = customers.find(c => c._id === e.target.value);
             setSelectedCustomer(found || null);
           }}
-          className="input w-full"
+          className="input w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">-- Chọn khách hàng --</option>
           {customers.map(c => (
@@ -128,7 +148,7 @@ export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: N
           <select
             value={selectedProductId}
             onChange={e => setSelectedProductId(e.target.value)}
-            className="input w-full"
+            className="input w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">-- Chọn sản phẩm --</option>
             {products.map(p => (
@@ -145,7 +165,7 @@ export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: N
             min={1}
             value={quantity}
             onChange={e => setQuantity(Number(e.target.value))}
-            className="input w-full"
+            className="input w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <button onClick={handleAddToCart} className="btn btn-primary mt-6">
@@ -156,34 +176,45 @@ export default function NewOrderForm({ onOrderCreatedAction, onCancelAction }: N
       {/* Giỏ hàng */}
       {cart.length > 0 && (
         <div className="mt-6">
-          <h2 className="font-medium mb-2">Giỏ hàng</h2>
-          <table className="w-full text-sm mb-4 border">
+          <h2 className="font-medium mb-2 text-lg">Giỏ hàng</h2>
+          <table className="w-full text-sm mb-4 border border-gray-200 rounded overflow-hidden">
             <thead className="bg-gray-100">
               <tr>
-                <th className="text-left px-2 py-1">Sản phẩm</th>
-                <th className="text-left px-2 py-1">SL</th>
-                <th className="text-left px-2 py-1">Đơn giá</th>
-                <th className="text-left px-2 py-1">Tổng</th>
+                <th className="text-left px-2 py-2">Ảnh</th>
+                <th className="text-left px-2 py-2">Sản phẩm</th>
+                <th className="text-left px-2 py-2">SL</th>
+                <th className="text-left px-2 py-2">Đơn giá</th>
+                <th className="text-left px-2 py-2">Tổng</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {cart.map((item, i) => (
-                <tr key={i}>
-                  <td className="px-2 py-1">{item.product.name}</td>
-                  <td className="px-2 py-1">{item.quantity}</td>
-                  <td className="px-2 py-1">{item.product.price.toLocaleString('vi-VN')} đ</td>
-                  <td className="px-2 py-1">
+                <tr key={i} className="border-t border-gray-200">
+                  <td className="px-2 py-2">
+                    <img
+                      src={item.product.image || 'https://via.placeholder.com/40'}
+                      alt={item.product.name}
+                      className="w-10 h-10 object-cover rounded"
+                    />
+                  </td>
+                  <td className="px-2 py-2">{item.product.name}</td>
+                  <td className="px-2 py-2">{item.quantity}</td>
+                  <td className="px-2 py-2">{item.product.price.toLocaleString('vi-VN')} đ</td>
+                  <td className="px-2 py-2">
                     {(item.quantity * item.product.price).toLocaleString('vi-VN')} đ
                   </td>
-                  <td className="px-2 py-1 text-red-600 cursor-pointer" onClick={() =>
-                    setCart(prev => prev.filter((_, idx) => idx !== i))
-                  }>Xóa</td>
+                  <td
+                    className="px-2 py-2 text-red-600 hover:underline cursor-pointer"
+                    onClick={() => setCart(prev => prev.filter((_, idx) => idx !== i))}
+                  >
+                    Xóa
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="text-right">
+          <div className="text-right mt-4">
             <button
               className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleOrder}

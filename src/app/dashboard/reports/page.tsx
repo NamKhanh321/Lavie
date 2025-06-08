@@ -14,7 +14,7 @@ import BestSellingProductsReport from './components/BestSellingProductsReport'
 type ReportType = 'inventory' | 'customer-debt' | 'supplier-debt' | 'financial' | 'revenue' | 'best-selling' | 'sales'
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState<ReportType>('inventory')
+  const [activeTab, setActiveTab] = useState<ReportType>('sales')
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0], // First day of current month
     endDate: new Date().toISOString().split('T')[0] // Today

@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo  } from "react";
 import { toast } from "react-toastify";
-import { FaPlus, FaFileInvoice, FaEye, FaTruckLoading } from "react-icons/fa";
+import { FaPlus, FaFileInvoice, FaEye, FaTruckLoading, FaRemoveFormat } from "react-icons/fa";
 import apiClient from "@/services/api/client";
 import { Modal } from "@/components/Modal";
 
@@ -52,11 +52,33 @@ export default function SuppliersPage() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 const [additionalPayment, setAdditionalPayment] = useState(0);
 const [updatingPayment, setUpdatingPayment] = useState(false);
+// Thêm state tìm kiếm
+const [searchTerm, setSearchTerm] = useState("");
+
+// Thêm state phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const filteredSuppliers = useMemo(() => {
+    if (!searchTerm) return suppliers;
+    return suppliers.filter((s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [suppliers, searchTerm]);
+
+  // Tính toán phân trang trên filteredSuppliers
+  const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
+
+  const paginatedSuppliers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredSuppliers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredSuppliers, currentPage]);
 
 
   useEffect(() => {
     fetchSuppliers();
-  }, []);
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchSuppliers = async () => {
     setIsLoading(true);
@@ -91,7 +113,16 @@ const [updatingPayment, setUpdatingPayment] = useState(false);
     setIsPurchasesLoading(false);
   };
 
-
+  const DeleteSuppliers = async (supplierId: string) => {
+    if (!confirm("Bạn có chắc muốn xóa nhà cung cấp này?")) return;
+    try {
+      await apiClient.delete(`/suppliers/${supplierId}`);
+      toast.success("Xóa nhà cung cấp thành công");
+      fetchSuppliers();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Lỗi khi xóa nhà cung cấp");
+    }
+  }
   
   const openImportModal = async (supplier: Supplier) => {
     setImportForm({ supplierId: supplier._id, items: [] });
@@ -105,11 +136,41 @@ const [updatingPayment, setUpdatingPayment] = useState(false);
   };
 
   const handleAddChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAddForm({ ...addForm, [e.target.name]: e.target.value });
+    const {name} = e.target as HTMLInputElement;
+    let {value} = e.target as HTMLInputElement;
+    switch(name) {
+      case "name":
+        value = value.replace(/[*|\":<>[\]{}`\\()';@&$]/g, '');
+        break;
+      case "contact_person":
+        value = value.replace(/[*|\":<>[\]{}`\\()';@&$]/g, '');
+        break;
+      case "phone":
+        value = value.replace(/[\De-]/g, '').slice(0,10); // Chỉ cho phép số, max 10 ký tự
+        break;
+      case "email":
+        value = value.replace(/[^a-zA-Z0-9._%+-@]/g,'');
+        break;  
+      case "address":
+        value = value.replace(/[*|\"<>[\]{}`\\()'@&$]/g, '');
+        break;
+    }
+    setAddForm({ ...addForm, [name]: value });
   };
 
   const handleAddSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!addForm.phone.startsWith('0') || addForm.phone.length < 10)
+    {
+      toast.error('Số điện thoại không hợp lệ');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(addForm.email))
+    {
+      toast.error('Email không hợp lệ');
+      return;
+    }
     try {
       await apiClient.post('/suppliers', addForm);
       toast.success('Thêm nhà cung cấp thành công');
@@ -174,6 +235,16 @@ const [updatingPayment, setUpdatingPayment] = useState(false);
           <FaPlus className="mr-2" /> Thêm nhà cung cấp
         </button>
       </div>
+        {/* Thanh tìm kiếm */}
+        <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Tìm kiếm nhà cung cấp theo tên..."
+          className="input w-full max-w-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         {isLoading ? (
           <div className="flex justify-center p-8">
@@ -185,27 +256,62 @@ const [updatingPayment, setUpdatingPayment] = useState(false);
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tên</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Liên hệ</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Địa chỉ</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {suppliers.map((s) => (
+              {paginatedSuppliers.map((s) => (
                 <tr key={s._id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{s.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {s.contact_person} - {s.phone}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{s.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{s.address}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-left">
                     <button className="btn btn-sm btn-outline mr-2 " onClick={() => openDetail(s)}><FaEye /></button>
                     <button className="btn btn-sm btn-outline mr-2 " onClick={() => openImportModal(s)}><FaTruckLoading /></button>
-                    <button className="btn btn-sm btn-outline"><FaFileInvoice /></button>
+                    <button className="btn btn-sm btn-outline mr-2 " onClick={() => DeleteSuppliers(s._id)}>Xóa</button>
+                    
+                    {/* <button className="btn btn-sm btn-outline"><FaFileInvoice /></button> */}
                   </td>
                 </tr>
               ))}
             </tbody>
+            
           </table>
+        )}
+                {totalPages > 1 && (
+          <div className="mt-4 flex justify-center space-x-2">
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </button>
+            {[...Array(totalPages)].map((_, idx) => {
+              const page = idx + 1;
+              return (
+                <button
+                  key={page}
+                  className={`btn btn-sm ${currentPage === page ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              );
+            })}
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </button>
+          </div>
         )}
       </div>
       {/* Modal chi tiết nhà cung cấp */}
@@ -233,17 +339,17 @@ const [updatingPayment, setUpdatingPayment] = useState(false);
                     <th className="px-2 py-1">Tổng tiền</th>
                     <th className="px-2 py-1">Đã thanh toán</th>
                     <th className="px-2 py-1">Còn nợ</th>
-                    <th className="px-2 py-1">Hóa đơn</th>
+                    {/* <th className="px-2 py-1">Hóa đơn</th> */}
                   </tr>
                 </thead>
                 <tbody>
                   {purchases.map((p) => (
                     <tr key={p._id}>
-                      <td className="px-2 py-1">{new Date(p.purchaseDate).toLocaleDateString()}</td>
-                      <td className="px-2 py-1">{p.totalAmount.toLocaleString("vi-VN")} ₫</td>
-                      <td className="px-2 py-1">{p.paidAmount.toLocaleString("vi-VN")} ₫</td>
-                      <td className="px-2 py-1 text-red-500">{p.debtRemaining.toLocaleString("vi-VN")} ₫</td>
-                      <td className="px-2 py-1"><a href={`/api/purchases/${p._id}/invoice`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Xuất PDF</a></td>
+                      <td className="px-2 py-1 text-center">{new Date(p.purchaseDate).toLocaleDateString()}</td>
+                      <td className="px-2 py-1 text-center">{p.totalAmount.toLocaleString("vi-VN")} ₫</td>
+                      <td className="px-2 py-1 text-center">{p.paidAmount.toLocaleString("vi-VN")} ₫</td>
+                      <td className="px-2 py-1 text-red-500 text-center">{p.debtRemaining.toLocaleString("vi-VN")} ₫</td>
+                      {/* <td className="px-2 py-1"><a href={`/api/purchases/${p._id}/invoice`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Xuất PDF</a></td> */}
                     </tr>
                   ))}
                 </tbody>

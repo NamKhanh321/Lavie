@@ -79,7 +79,16 @@ export default function UserForm({ user, onSave }: UserFormProps) {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name } = e.target as HTMLInputElement;
+    let {value} = e.target as HTMLInputElement;
+    if (name === 'username')
+    {
+      value = value.replace(/[^a-zA-Z0-9_.-]/g, '');
+    }
+    else if (name === 'name')
+    {
+      value = value.replace(/[*|\":<>[\]{}`\\()';@&$]/g, '');
+    }
     if (name) {
       setFormData((prev) => ({
         ...prev,
@@ -209,8 +218,8 @@ export default function UserForm({ user, onSave }: UserFormProps) {
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
           )}
         </div>
-        
-        <div>
+        {/* không cho phép đổi từ khách hàng sang nhân viên /admin */}
+        {(user?.role !== 'customer') && <div>
           <label className="block text-sm font-medium text-gray-700">
             Vai trò <span className="text-red-500">*</span>
           </label>
@@ -232,7 +241,8 @@ export default function UserForm({ user, onSave }: UserFormProps) {
                 leaveTo="opacity-0"
               >
                 <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                  {roles.map((role) => (
+                  {/* Không cho phép đổi từ nhân viên / admin sang khách hàng */}
+                  {roles.map((role) => (role.id !== 'customer' || !isEditMode)&& (
                     <Listbox.Option
                       key={role.id}
                       className={({ active }) =>
@@ -263,7 +273,7 @@ export default function UserForm({ user, onSave }: UserFormProps) {
           {errors.role && (
             <p className="mt-1 text-sm text-red-600">{errors.role}</p>
           )}
-        </div>
+        </div>}
         {/* Thêm input chọn loại khách hàng */}
         {selectedRole.id === 'customer' && !isEditMode && (
         <div>               

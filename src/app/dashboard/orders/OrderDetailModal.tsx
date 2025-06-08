@@ -200,7 +200,8 @@ export default function OrderDetailModal({ orderId, isOpen, onCloseAction, onOrd
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              {/* //fix form chi tiet don hang */}
+              <Dialog.Panel className=" transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 {modalType === null && (
                   <>
                     <div className="flex justify-between items-start">

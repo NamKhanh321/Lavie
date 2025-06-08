@@ -54,6 +54,7 @@ export default function CustomerDebtReport({ dateRange }: CustomerDebtReportProp
         endDate: dateRange.endDate
       })
       setReport(data)
+      console.log(data);
     } catch (error: any) {
       console.error('Error fetching customer debt report:', error)
       toast.error(`Lỗi khi tải báo cáo công nợ khách hàng: ${error.message || 'Unknown error'}`)
@@ -209,8 +210,8 @@ export default function CustomerDebtReport({ dateRange }: CustomerDebtReportProp
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-red-600">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(customer.totalDebt)}
+                          <div className={`text-sm font-medium ${(customer.totalDebt > 0) ? 'text-red-500' : 'text-green-500'}`}>
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Math.abs(customer.totalDebt))}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

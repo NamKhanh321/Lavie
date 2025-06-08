@@ -30,6 +30,9 @@ export default function CustomerPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'retail' | 'agency'>('all')
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
 
   // Form state
   const [formData, setFormData] = useState({
@@ -75,9 +78,46 @@ export default function CustomerPage() {
     }
     setIsLoading(false)
   }
+    // Lọc và tìm kiếm khách hàng
+    const filteredCustomers = customers.filter((c) => {
+      // Lọc theo loại
+      if (filterType !== 'all' && c.type !== filterType) return false;
+      // Tìm kiếm theo tên hoặc số điện thoại
+      const search = searchTerm.trim().toLowerCase();
+      if (!search) return true;
+      return (
+        c.name.toLowerCase().includes(search) ||
+        (c.phone && c.phone.toLowerCase().includes(search))
+      );
+    });
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedCustomers = filteredCustomers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
+    const { name } = e.target as HTMLInputElement;
+    let {value} = e.target as HTMLInputElement;
+    if (name === 'name')
+    {
+      value = value.replace(/[*|\":<>[\]{}`\\()';@&$]/g, '');
+    }
+    else if (name === 'phone')
+    {
+      value = value.replace(/[\De-]/g, '').slice(0,10); // Chỉ cho phép số, max 10 ký tự
+    }
+    else if (name === 'address')
+    {
+      value = value.replace(/[*|\"<>[\]{}`\\()'@&$]/g, '');
+    }
     setFormData({
       ...formData,
       [name]: value
@@ -88,6 +128,12 @@ export default function CustomerPage() {
     e.preventDefault()
 
     // In a real app, this would be an API call
+    if(!formData.phone.startsWith('0') || formData.phone.length < 10)
+    {
+      toast.error('Số điện thoại không hợp lệ');
+      return
+    }
+    try {
     const newCustomer: Customer = await customerService.createCustomer(formData);
     // For now, just simulate adding to the list
     // const newCustomer: Customer = {
@@ -105,6 +151,11 @@ export default function CustomerPage() {
     resetForm()
     setShowAddModal(false)
     toast.success('Thêm khách hàng thành công')
+    }
+    catch (e)
+    {
+      toast.error('Cập nhật khách hàng thất bại')
+    }
   }
 
   const handleEditCustomer = async (e: React.FormEvent) => {
@@ -112,7 +163,14 @@ export default function CustomerPage() {
 
     if (!selectedCustomer) return
 
+    if(!formData.phone.startsWith('0') || formData.phone.length < 10)
+    {
+      toast.error('Số điện thoại không hợp lệ');
+      return
+    }
+
     // In a real app, this would be an API call
+    try {
     const updatedCustomers = await customerService.updateCustomer(selectedCustomer._id,formData);
     // For now, just simulate updating the list
     // const updatedCustomers = customers.map(customer =>
@@ -131,6 +189,11 @@ export default function CustomerPage() {
     resetForm()
     setShowEditModal(false)
     toast.success('Cập nhật khách hàng thành công')
+    }
+    catch (e)
+    {
+      toast.error('Cập nhật khách hàng thất bại')
+    }
   }
 
   const handleDeleteCustomer = async (id: string) => {
@@ -223,18 +286,6 @@ export default function CustomerPage() {
     setSelectedCustomer(null)
   }
 
-  // Lọc và tìm kiếm khách hàng
-  const filteredCustomers = customers.filter((c) => {
-    // Lọc theo loại
-    if (filterType !== 'all' && c.type !== filterType) return false;
-    // Tìm kiếm theo tên hoặc số điện thoại
-    const search = searchTerm.trim().toLowerCase();
-    if (!search) return true;
-    return (
-      c.name.toLowerCase().includes(search) ||
-      (c.phone && c.phone.toLowerCase().includes(search))
-    );
-  });
 
   return (
     <div className="space-y-6">
@@ -300,8 +351,8 @@ export default function CustomerPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredCustomers.length > 0 ? (
-                    filteredCustomers.map((customer) => (
+                  {paginatedCustomers.length > 0 ? (
+                    paginatedCustomers.map((customer) => (
                       <tr key={customer._id}>
                         <td className="px-6 py-4 whitespace-nowrap max-w-xs truncate">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">{customer.name}</div>
@@ -326,10 +377,7 @@ export default function CustomerPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className={`text-sm ${customer.debt > 0 ? 'text-red-500' : 'text-green-500 dark:text-gray-400'
                             }`}>
-                            {customer.debt > 0
-                              ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(customer.debt)
-                              : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.abs(customer.debt))
-                            }
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.abs(customer.debt))}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -365,6 +413,35 @@ export default function CustomerPage() {
                   )}
                 </tbody>
               </table>
+              {filteredCustomers.length > 10 && (
+                <div className="flex justify-center space-x-2 mt-4">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={handlePrevPage}
+                    className="btn btn-outline"
+                  >
+                    Trước
+                  </button>
+
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`btn ${currentPage === i + 1 ? 'btn-primary' : 'btn-outline'}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={handleNextPage}
+                    className="btn btn-outline"
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}

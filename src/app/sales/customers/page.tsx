@@ -53,8 +53,7 @@ export default function SalesCustomersPage() {
               <td className="px-6 py-4 whitespace-nowrap text-gray-900">{c.phone}</td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-900">{c.address}</td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-900">{c.type ==='retail' ? 'Khách hàng lẻ' : 'Đại lý cấp 2'}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-gray-900">{c.debt.toLocaleString('vi-VN')} đ
-              </td>
+              <td className={`px-6 py-4 whitespace-nowrap ${(c.debt > 0 ? 'text-red-500' : 'text-green-500')}`}>{Math.abs(c.debt).toLocaleString('vi-VN')} đ</td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-900">{c.empty_debt.toLocaleString('vi-VN')} vỏ</td>
             </tr>
           ))}

@@ -265,8 +265,8 @@ export default function SalesReport({ dateRange }: SalesReportProps) {
           </div>
 
           {/* Top Products and Customers */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-4">
+          <div className="grid grid-cols-1 gap-6 mb-8">
+            {/* <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-lg font-medium mb-4">Top 5 sản phẩm bán chạy</h3>
               <Bar options={topProductsOptions} data={topProductsChartData} height={200} />
 
@@ -302,7 +302,7 @@ export default function SalesReport({ dateRange }: SalesReportProps) {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div> */}
 
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-lg font-medium mb-4">Top 5 khách hàng</h3>
@@ -338,7 +338,7 @@ export default function SalesReport({ dateRange }: SalesReportProps) {
                 </tbody>
               </table>
 
-              <div className="mt-4">
+              <div className="mt-4 w-[800px] h-[800px] mx-auto">
                 <Pie
                   data={{
                     labels: report?.topCustomers?.map(c => c.customerName) || [],

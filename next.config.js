@@ -11,6 +11,7 @@ const nextConfig = {
       'nuoctinhkhiet.com',
       'nuocsatori.com',
       'sonhawater.com',
+      'nuockhoangducphat.com',
       'localhost'
     ],
     remotePatterns: [

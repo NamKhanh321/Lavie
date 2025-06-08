@@ -32,7 +32,7 @@ export default function QuickOrderPage() {
     name: '',
     phone: '',
     address: '',
-    type: 'retail' as 'retail' | 'agency',
+    type: 'retail',
   })
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false)
   
@@ -142,7 +142,7 @@ export default function QuickOrderPage() {
       toast.error('Vui lòng nhập tên và số điện thoại của khách hàng')
       return
     }
-     
+    
     try {
       const createdCustomer = await customerService.createCustomer(newCustomer)
       setCustomers([...customers, createdCustomer])
@@ -184,7 +184,7 @@ export default function QuickOrderPage() {
       paidAmount: paymentAmount,
       returnableOut: orderItems.reduce((total, item) => {
         // Assuming each product has a returnable property
-        const isReturnable = item.product.is_returnable
+        const isReturnable = item.product.isReturnable
         return total + (isReturnable ? item.quantity : 0)
       }, 0),
       returnableIn: returnableContainers,
@@ -254,7 +254,7 @@ export default function QuickOrderPage() {
     // Add returnable containers info
     const tableEndY = (doc as any).lastAutoTable.finalY + 10
     doc.text(`Số vỏ mang đi: ${orderItems.reduce((total, item) => {
-      return total + (item.product.is_returnable ? item.quantity : 0)
+      return total + (item.product.isReturnable ? item.quantity : 0)
     }, 0)}`, 14, tableEndY)
     doc.text(`Số vỏ trả lại: ${returnableContainers}`, 14, tableEndY + 5)
     
@@ -435,7 +435,7 @@ export default function QuickOrderPage() {
                     <select
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                       value={newCustomer.type}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, type: e.target.value as 'retail' | 'agency'})}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, type: e.target.value })}
                     >
                       <option value="retail">Khách lẻ</option>
                       <option value="agency">Đại lý</option>

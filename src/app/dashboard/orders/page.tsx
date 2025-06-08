@@ -26,6 +26,25 @@ export default function OrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'pending' | 'canceled'>('all')
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const filteredOrders = orders
+  .filter(order => 
+    order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order._id.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  .filter(order => 
+    statusFilter === 'all' ? true : order.status === statusFilter
+  )
+  .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+
   
   useEffect(() => {
     fetchOrders()
@@ -143,16 +162,7 @@ export default function OrdersPage() {
       toast.success('Tạo đơn hàng mới thành công')
     }
   }
-  
-  const filteredOrders = orders
-    .filter(order => 
-      order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order._id.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(order => 
-      statusFilter === 'all' ? true : order.status === statusFilter
-    )
-    .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
+
   
   return (
     <div className="space-y-6">
@@ -223,8 +233,8 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => (
+              {currentOrders.length > 0 ? (
+                        currentOrders.map((order) => (
                     <tr key={order._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-3 py-3 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">{order._id}</div>
@@ -335,6 +345,39 @@ export default function OrdersPage() {
                 )}
               </tbody>
             </table>
+                              {totalPages > 1 && (
+                    <div className="flex justify-center mt-4 space-x-2">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                        disabled={currentPage === 1}
+                      >
+                        Trước
+                      </button>
+
+                      {[...Array(totalPages)].map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(index + 1)}
+                          className={`px-3 py-1 rounded ${
+                            currentPage === index + 1
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                        disabled={currentPage === totalPages}
+                      >
+                        Tiếp
+                      </button>
+                    </div>
+                  )}
           </div>
         )}
       </div>

@@ -63,11 +63,12 @@ export default function BestSellingProductsReport({ dateRange }: BestSellingProd
   
   const handleExportPdf = async () => {
     try {
-      const url = await reportService.generateBestSellingProductsReportPdf({
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
-        limit
-      })
+      // const url = await reportService.generateBestSellingProductsReportPdf({
+      //   startDate: dateRange.startDate,
+      //   endDate: dateRange.endDate,
+      //   limit
+      // })
+      const url = await reportService.generateInventoryReportPdf();
       window.open(url, '_blank')
     } catch (error) {
       // Xử lý lỗi nếu cần

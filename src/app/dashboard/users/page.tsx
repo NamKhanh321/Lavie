@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getUsers, deleteUser, User } from '@/services/api/userService';
@@ -8,6 +8,7 @@ import UserForm from './UserForm';
 import { formatDate } from '@/utils/formatters';
 
 import { customerService, Customer } from '@/services/api/customerService';
+const PAGE_SIZE = 10;
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -20,11 +21,14 @@ export default function UsersPage() {
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' as 'success' | 'error' });
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Load users on component mount
   useEffect(() => {
     fetchUsers();
-  }, []);
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchUsers = async () => {
     try {
@@ -41,7 +45,31 @@ export default function UsersPage() {
       setLoading(false);
     }
   };
+  const filteredUsers = React.useMemo(() => {
+    return users.filter((user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [users, searchTerm]);
+  // Tính tổng trang dựa trên filteredUsers.length
+  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
 
+  // Lấy users hiển thị ở trang hiện tại
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // reset về trang 1 khi tìm kiếm
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((page) => Math.max(page - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((page) => Math.min(page + 1, totalPages));
+  };
+  
   const handleOpenAddDialog = () => {
     setOpenAddDialog(true);
   };
@@ -139,6 +167,16 @@ export default function UsersPage() {
           Thêm người dùng
         </button>
       </div>
+       {/* Search input */}
+       <div className="mb-4">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Tìm kiếm theo tên hoặc tên đăng nhập..."
+          className="w-full max-w-sm rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
 
       {error && (
         <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
@@ -174,14 +212,14 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                      Không có dữ liệu người dùng
-                    </td>
-                  </tr>
-                ) : (
-                  users.map((user) => (
+                    {paginatedUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                          Không có dữ liệu người dùng
+                        </td>
+                      </tr>
+                    ) : (
+                  paginatedUsers.map((user) => (
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {user.name}
@@ -214,6 +252,45 @@ export default function UsersPage() {
                 )}
               </tbody>
             </table>
+           {/* Pagination controls */}
+           {totalPages > 1 && (
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded border ${
+                    currentPage === 1 ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-primary-600 border-primary-600 hover:bg-primary-100'
+                  }`}
+                >
+                  Trước
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-1 rounded border ${
+                        currentPage === pageNum ? 'bg-primary-600 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded border ${
+                    currentPage === totalPages ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-primary-600 border-primary-600 hover:bg-primary-100'
+                  }`}
+                >
+                  Tiếp
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -23,6 +23,7 @@ export default function ProductsPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [searchTermForCards, setSearchTermForCards] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -51,7 +52,16 @@ export default function ProductsPage() {
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement
+    const { name, type } = e.target as HTMLInputElement;
+    let {value} = e.target as HTMLInputElement;
+    switch (name) {
+      case "name":
+        value = value.replace(/[*|\":<>[\]{}`\\()';@&$]/g, '');
+        break;
+      case "unit":
+        value = value.replace(/[*|\":<>[\]{}`\\()';@&$]/g, '');
+        break;
+    }
     setFormData({
       ...formData,
       [name]: type === 'checkbox'
@@ -134,6 +144,12 @@ export default function ProductsPage() {
     })
     setSelectedProduct(null)
   }
+  const filteredProductsForCards = products
+  .filter(product =>
+    product.name.toLowerCase().includes(searchTermForCards.toLowerCase())
+  )
+  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
 
   const filteredProducts = products
     .filter(product =>
@@ -155,34 +171,37 @@ export default function ProductsPage() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <div className="flex flex-col md:flex-row justify-between mb-4 space-y-4 md:space-y-0">
-          <div className="relative w-full md:w-1/3">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              className="input pl-10"
-              placeholder="Tìm kiếm sản phẩm..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
+        
         {isLoading ? (
           <div className="flex justify-center p-8">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-400 border-t-transparent"></div>
           </div>
         ) : (
           <>
+          <div className="relative mb-4 w-full md:w-1/3">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FaSearch className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="input pl-10"
+            placeholder="Tìm kiếm sản phẩm..."
+            value={searchTermForCards}
+            onChange={(e) => setSearchTermForCards(e.target.value)}
+          />
+        </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
-              {products.map(product => (
+              {filteredProductsForCards.map(product => (
                 <div key={product._id} className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-600">
                   <div className="p-4 bg-primary-50 dark:bg-primary-900 flex items-center justify-center">
-                    <div className="h-16 w-16 rounded-full bg-primary-100 dark:bg-primary-800 flex items-center justify-center">
+                  <div className="h-16 w-16 rounded-full bg-primary-100 dark:bg-primary-800 flex items-center justify-center overflow-hidden">
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                    ) : (
                       <FaWater className="text-primary-600 dark:text-primary-300 text-2xl" />
-                    </div>
+                    )}
+                  </div>
                   </div>
 
                   <div className="p-4">
@@ -241,6 +260,20 @@ export default function ProductsPage() {
                 <FaBoxes className="mr-2" />
                 Cập nhật tồn kho
               </h3>
+              <div className="flex flex-col md:flex-row justify-between mb-4 space-y-4 md:space-y-0">
+              <div className="relative w-full md:w-1/3">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    className="input pl-10"
+                    placeholder="Tìm kiếm sản phẩm..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
 
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -454,6 +487,19 @@ export default function ProductsPage() {
                     value={formData.price}
                     onChange={handleInputChange}
                     min="0"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-image" className="label">Ảnh sản phẩm</label>
+                  <input
+                    type="text"
+                    id="edit-image"
+                    name="image"
+                    className="input"
+                    placeholder="Ảnh sản phẩm"
+                    value={formData.image}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
