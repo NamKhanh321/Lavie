@@ -304,7 +304,7 @@ export default function OrdersPage() {
                           
                           <button
                             onClick={() => {
-                              const invoiceUrl = `http://localhost:5000/api/invoices/${order._id}?token=${localStorage.getItem('userToken')}`
+                              const invoiceUrl = `${process.env.NEXT_PUBLIC_API_URL}/invoices/${order._id}?token=${localStorage.getItem('userToken')}`
                               window.open(invoiceUrl, '_blank')
                             }}
                             className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"

@@ -101,7 +101,7 @@ export default function OrderDetailModal({ orderId, isOpen, onCloseAction, onOrd
       // Open invoice in a new window
       const token = localStorage.getItem('userToken')
       const baseUrl = window.location.origin
-      const invoiceUrl = `http://localhost:5000/api/invoices/${order._id}?token=${token}`
+      const invoiceUrl = `${process.env.NEXT_PUBLIC_API_URL}/invoices/${order._id}?token=${token}`
       window.open(invoiceUrl, '_blank')
     } catch (error: any) {
       console.error('Error printing invoice:', error)

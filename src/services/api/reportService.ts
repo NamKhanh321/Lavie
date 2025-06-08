@@ -215,7 +215,7 @@ export const reportService = {
     try {
       const token = localStorage.getItem('userToken');
       // Add token directly to the URL as a query parameter
-      const url = `http://localhost:5000/api/reports/invoice/${orderId}?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/invoice/${orderId}?token=${token}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -247,7 +247,7 @@ export const reportService = {
       queryParams.append('token', token || '');
 
       const queryString = queryParams.toString();
-      const url = `http://localhost:5000/api/reports/customer-debt/export?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/customer-debt/export?token=${token}`;
       
       // Trả về URL trực tiếp thay vì xử lý blob
       return url;
@@ -267,7 +267,7 @@ export const reportService = {
       queryParams.append('token', token || '');
 
       const queryString = queryParams.toString();
-      const url = `http://localhost:5000/api/reports/supplier-debt/export?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/supplier-debt/export?token=${token}`;
       
       // Trả về URL trực tiếp thay vì xử lý blob
       return url;
@@ -287,7 +287,7 @@ export const reportService = {
       queryParams.append('token', token || '');
 
       // Use the correct endpoint for sales report
-      const url = `http://localhost:5000/api/reports/sales/export?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/sales/export?token=${token}`;
 
       // Return URL directly instead of processing blob
       return url;
@@ -307,7 +307,7 @@ export const reportService = {
       queryParams.append('token', token || '');
 
       // Use the correct endpoint for revenue report
-      const url = `http://localhost:5000/api/reports/revenue/export?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/revenue/export?token=${token}`;
 
       return url;
     } catch (error) {
@@ -320,7 +320,7 @@ export const reportService = {
     try {
       const token = localStorage.getItem('userToken');
       // Add token directly to the URL as a query parameter
-      const url = `http://localhost:5000/api/reports/inventory/export?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/inventory/export?token=${token}`;
       
       // Trả về URL trực tiếp thay vì xử lý blob
       return url;
@@ -341,7 +341,7 @@ export const reportService = {
       queryParams.append('token', token || '');
 
       // Use the correct endpoint for best selling products report
-      const url = `http://localhost:5000/api/reports/products/best-selling/export?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/products/best-selling/export?token=${token}`;
       
       return url;
     } catch (error) {
@@ -360,7 +360,7 @@ export const reportService = {
       queryParams.append('token', token || '');
 
       // Use the correct endpoint for financial report
-      const url = `http://localhost:5000/api/reports/financial/export?token=${token}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/financial/export?token=${token}`;
       
       return url;
     } catch (error) {
